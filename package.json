@@ -1,0 +1,14 @@
+{
+  "name": "scoopr",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "npm run test -w @scoopr/shared",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "mobile": "npm run start -w @scoopr/mobile",
+    "admin": "npm run dev -w @scoopr/admin"
+  }
+}

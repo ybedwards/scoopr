@@ -1,0 +1,34 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+
+import { supabaseEnv } from "@/lib/supabase/env";
+
+// Keeps the Supabase session cookie fresh and sends signed-out visitors to /login.
+// Admin role checks happen in the dashboard layout and every server action.
+export async function proxy(request: NextRequest) {
+  let response = NextResponse.next({ request });
+  const { url, key } = supabaseEnv();
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (toSet) => {
+        for (const { name, value } of toSet) request.cookies.set(name, value);
+        response = NextResponse.next({ request });
+        for (const { name, value, options } of toSet) response.cookies.set(name, value, options);
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user && !request.nextUrl.pathname.startsWith("/login")) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+  return response;
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
